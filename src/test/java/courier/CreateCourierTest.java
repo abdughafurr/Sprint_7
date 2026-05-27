@@ -15,7 +15,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class CreateCourierTest {
 
     private final CourierClient courierClient = new CourierClient();
-    private int courierId;
+    private Courier createdCourier;
 
     private String randomLogin() {
         return "user_" + UUID.randomUUID().toString().substring(0, 8);
@@ -23,8 +23,11 @@ public class CreateCourierTest {
 
     @After
     public void tearDown() {
-        if (courierId != 0) {
-            courierClient.delete(courierId);
+        if (createdCourier != null) {
+            int id = loginAndGetId(createdCourier);
+            if (id != 0) {
+                courierClient.delete(id);
+            }
         }
     }
 
@@ -36,17 +39,16 @@ public class CreateCourierTest {
         Response response = createCourier(courier);
         checkStatusCode(response, HttpStatus.SC_CREATED);
         checkOkTrue(response);
-        courierId = loginAndGetId(courier);
+        createdCourier = courier;
     }
 
     @Test
     @Story("Нельзя создать двух одинаковых курьеров")
     @Description("Проверяем что при создании дубликата возвращается 409 и сообщение об ошибке")
     public void cannotCreateDuplicateCourier() {
-        String login = randomLogin();
-        Courier courier = new Courier(login, "dupPass123", "DupName");
+        Courier courier = new Courier(randomLogin(), "dupPass123", "DupName");
         createCourier(courier);
-        courierId = loginAndGetId(courier);
+        createdCourier = courier;
         Response response = createCourier(courier);
         checkStatusCode(response, HttpStatus.SC_CONFLICT);
         checkErrorMessage(response, "Этот логин уже используется. Попробуйте другой.");
