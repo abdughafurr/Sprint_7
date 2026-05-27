@@ -1,7 +1,11 @@
 package order;
 
+import io.qameta.allure.Description;
+import io.qameta.allure.Story;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
+import org.apache.http.HttpStatus;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -16,12 +20,14 @@ import static org.hamcrest.Matchers.notNullValue;
 public class CreateOrderTest {
 
     private final List<String> color;
+    private int track;
+    private final OrderClient orderClient = new OrderClient();
 
     public CreateOrderTest(List<String> color) {
         this.color = color;
     }
 
-    @Parameterized.Parameters
+    @Parameterized.Parameters(name = "Цвет самоката: {0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {List.of("BLACK")},
@@ -31,9 +37,16 @@ public class CreateOrderTest {
         });
     }
 
-    private final OrderClient orderClient = new OrderClient();
+    @After
+    public void tearDown() {
+        if (track != 0) {
+            orderClient.cancelOrder(track);
+        }
+    }
 
     @Test
+    @Story("Создание заказа с разными цветами")
+    @Description("Проверяем что заказ создаётся и возвращается track для всех вариантов цвета")
     public void createOrderWithDifferentColors() {
         Order order = new Order(
                 "Иван", "Иванов", "Москва, ул. Ленина 1",
@@ -41,8 +54,9 @@ public class CreateOrderTest {
                 "2024-12-31", "Позвоните заранее", color
         );
         Response response = createOrder(order);
-        checkStatusCode(response, 201);
+        checkStatusCode(response, HttpStatus.SC_CREATED);
         checkTrackNotNull(response);
+        track = response.then().extract().path("track");
     }
 
     @Step("Создать заказ")

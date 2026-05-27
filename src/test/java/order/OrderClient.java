@@ -1,27 +1,35 @@
 package order;
 
 import io.restassured.response.Response;
+import util.Endpoints;
 
 import static io.restassured.RestAssured.given;
 
 public class OrderClient {
 
-    private static final String BASE_URL = "https://qa-scooter.praktikum-services.ru";
-
     public Response createOrder(Order order) {
         return given()
                 .header("Content-type", "application/json")
-                .baseUri(BASE_URL)
+                .baseUri(Endpoints.BASE_URL)
                 .body(order)
                 .when()
-                .post("/api/v1/orders");
+                .post(Endpoints.ORDERS);
+    }
+
+    public Response cancelOrder(int track) {
+        return given()
+                .header("Content-type", "application/json")
+                .baseUri(Endpoints.BASE_URL)
+                .queryParam("track", track)
+                .when()
+                .put(Endpoints.ORDERS_CANCEL);
     }
 
     public Response getOrders() {
         return given()
                 .header("Content-type", "application/json")
-                .baseUri(BASE_URL)
+                .baseUri(Endpoints.BASE_URL)
                 .when()
-                .get("/api/v1/orders");
+                .get(Endpoints.ORDERS);
     }
 }
